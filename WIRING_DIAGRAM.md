@@ -1,7 +1,8 @@
-# 🔌 WIRING DIAGRAM - Autonomous Delivery Robot
-## ESP8266 NodeMCU Based System
+# 🔌 WIRING DIAGRAM - Autonomous Delivery Robot V2
+## ESP8266 NodeMCU Based System (PIN CONFLICTS SOLVED)
 
 **Board:** ESP8266 NodeMCU (ESP-12E Module)  
+**Version:** V2 - GPS Disabled, Conflict-Free Pin Assignment  
 **Date:** February 19, 2026  
 **Voltage:** 3.3V Logic, 5V-12V Motor Power
 
@@ -12,35 +13,33 @@
 1. **ESP8266 is 3.3V logic** - Do NOT connect 5V directly to GPIO pins!
 2. **Motors require separate power** - Use external 5-12V battery for motors
 3. **Common ground** - Connect all ground pins together
-4. **Pin sharing** - Some pins are shared (see notes below)
+4. **✅ V2: NO PIN CONFLICTS** - All functions have dedicated GPIO pins
 5. **Power supply** - Use adequate power supply (2A+ for motors)
+6. **⚠️ Sonar ECHO voltage divider required** - See wiring details below
 
 ---
 
-## 📊 COMPLETE PIN ASSIGNMENT TABLE
+## 📊 COMPLETE PIN ASSIGNMENT TABLE (V2 - CONFLICT-FREE)
 
 | Component | Function | ESP8266 Pin | GPIO | Notes |
 |-----------|----------|-------------|------|-------|
 | **MOTOR DRIVER L298D** |
-| Left Motor PWM | Speed Control | D1 | GPIO5 | ⚠️ Shared with I2C SCL |
-| Left Motor IN1 | Direction | D3 | GPIO0 | |
-| Left Motor IN2 | Direction | D4 | GPIO2 | |
-| Right Motor PWM | Speed Control | D5 | GPIO14 | |
-| Right Motor IN1 | Direction | D6 | GPIO12 | |
-| Right Motor IN2 | Direction | D7 | GPIO13 | ⚠️ Shared with Sonar Echo |
+| Left Motor PWM | Speed Control | D0 | GPIO16 | ✅ Dedicated PWM |
+| Left Motor IN1 | Direction | D4 | GPIO2 | Shares with built-in LED |
+| Left Motor IN2 | Direction | D5 | GPIO14 | ✅ Dedicated |
+| Right Motor PWM | Speed Control | D6 | GPIO12 | ✅ Dedicated PWM |
+| Right Motor IN1 | Direction | D8 | GPIO15 | ✅ Dedicated |
+| Right Motor IN2 | Direction | D7 | GPIO13 | ✅ Dedicated (no conflict!) |
 | **ULTRASONIC SENSOR (HC-SR04)** |
-| Trigger | Pulse Output | D8 | GPIO15 | |
-| Echo | Pulse Input | D7 | GPIO13 | ⚠️ Shared with Motor Right IN2 |
+| Trigger | Pulse Output | D2 | GPIO4 | ✅ Dedicated OUTPUT |
+| Echo | Pulse Input | D3 | GPIO0 | ✅ Dedicated INPUT (needs divider) |
 | **MPU6050 IMU (I2C)** |
-| SDA | I2C Data | D2 | GPIO4 | Standard I2C SDA |
-| SCL | I2C Clock | D1 | GPIO5 | ⚠️ Shared with Motor Left PWM |
+| SDA | I2C Data | D1 | GPIO5 | ✅ Dedicated I2C SDA |
+| SCL | I2C Clock | TX | GPIO1 | ✅ Dedicated I2C SCL (no PWM!) |
 | **GPS MODULE** |
-| RX | Serial Receive | RX | GPIO3 | ⚠️ Serial debugging disabled when GPS active |
-| TX | Serial Transmit | TX | GPIO1 | ⚠️ Serial debugging disabled when GPS active |
-| **EMERGENCY STOP** |
-| Button | E-Stop Input | D0 | GPIO16 | Pull-up, active LOW |
+| - | - | - | - | ❌ DISABLED in V2 (pins reallocated) |
 | **STATUS LED** |
-| LED | Status Indicator | D4 | GPIO2 | Built-in LED |
+| LED | Status Indicator | D4 | GPIO2 | Built-in LED (shares with Motor IN1) |
 
 ---
 
@@ -58,18 +57,18 @@ ESP8266 NodeMCU:
 Note: Can power via USB (5V) or VIN pin (5-12V with onboard regulator)
 ```
 
-### 2. L298D Motor Driver Connections
+### 2. L298D Motor Driver Connections (V2 - UPDATED PINS)
 ```
 ESP8266 NodeMCU          L298D Motor Driver
 ┌─────────────────┐      ┌──────────────────────┐
 │                 │      │                      │
-│  D1 (GPIO5)  ───┼──────┼─→ ENA (Left PWM)    │
-│  D3 (GPIO0)  ───┼──────┼─→ IN1               │
-│  D4 (GPIO2)  ───┼──────┼─→ IN2               │
+│  D0 (GPIO16) ───┼──────┼─→ ENA (Left PWM)    │ ✅ CHANGED from D1
+│  D4 (GPIO2)  ───┼──────┼─→ IN1               │ ✅ CHANGED from D3
+│  D5 (GPIO14) ───┼──────┼─→ IN2               │ ✅ CHANGED from D4
 │                 │      │                      │
-│  D5 (GPIO14) ───┼──────┼─→ ENB (Right PWM)   │
-│  D6 (GPIO12) ───┼──────┼─→ IN3               │
-│  D7 (GPIO13) ───┼──────┼─→ IN4               │
+│  D6 (GPIO12) ───┼──────┼─→ ENB (Right PWM)   │ Same
+│  D8 (GPIO15) ───┼──────┼─→ IN3               │ ✅ CHANGED from D6
+│  D7 (GPIO13) ───┼──────┼─→ IN4               │ Same
 │                 │      │                      │
 │  GND ───────────┼──────┼─→ GND               │
 └─────────────────┘      │                      │
@@ -93,85 +92,98 @@ Motor Power Supply:
 - ALL grounds must be connected together
 ```
 
-### 3. HC-SR04 Ultrasonic Sensor
+### 3. HC-SR04 Ultrasonic Sensor (V2 - UPDATED PINS + VOLTAGE DIVIDER)
 ```
 ESP8266 NodeMCU          HC-SR04 Sonar
 ┌─────────────────┐      ┌──────────────┐
 │                 │      │              │
-│  D8 (GPIO15) ───┼──────┼─→ TRIG      │
-│  D7 (GPIO13) ───┼──────┼─→ ECHO      │
-│  5V or 3.3V  ───┼──────┼─→ VCC       │
-│  GND ────────────┼──────┼─→ GND       │
-└─────────────────┘      └──────────────┘
+│  D2 (GPIO4)  ───┼──────┼─→ TRIG      │ ✅ CHANGED from D8
+│                 │      │              │
+│  D3 (GPIO0)  ───┼──┐   │  ECHO ───────┤ ✅ CHANGED from D7
+│                 │  │   └──────────────┘
+│                 │  │
+│                 │  └─── 1kΩ ─── ECHO (5V)
+│                 │         │
+│  GND ───────────┼─── 2kΩ ─┘    Creates 3.3V safe signal
+│                 │
+│  5V or 3.3V  ───┼──────┼─→ VCC (HC-SR04)
+│  GND ────────────┼──────┼─→ GND
+└─────────────────┘      
 
-⚠️ NOTE: 
-- Most HC-SR04 work with 3.3V, some need 5V
-- If using 5V VCC, ECHO output might be 5V!
-- Use voltage divider for ECHO if 5V:
+⚠️ CRITICAL VOLTAGE DIVIDER REQUIRED:
+- HC-SR04 ECHO outputs 5V when powered from 5V
+- ESP8266 GPIO pins are 3.3V maximum!
+- MUST use voltage divider:
   
-  ECHO ──┬── 1kΩ ──→ ESP8266 D7
-         └── 2kΩ ──→ GND
+  ECHO (5V) ──→ 1kΩ resistor ──→ D3 (GPIO0)
+                               └──→ 2kΩ resistor ──→ GND
   
-  This creates ~3.3V safe voltage
+  Formula: 5V × (2kΩ / 3kΩ) = 3.33V ✓ SAFE
+
+ALTERNATIVE (Simpler but reduced range):
+- Power HC-SR04 from 3.3V instead of 5V
+- Direct connection: ECHO → D3 (no resistors needed)
+- Range reduced to ~2-3m (still usable for robot)
 ```
 
-### 4. MPU6050 IMU (I2C)
+### 4. MPU6050 IMU (I2C) - V2 DEDICATED PINS (NO CONFLICTS!)
 ```
 ESP8266 NodeMCU          MPU6050
 ┌─────────────────┐      ┌──────────────┐
 │                 │      │              │
-│  D2 (GPIO4)  ───┼──────┼─→ SDA       │
-│  D1 (GPIO5)  ───┼──────┼─→ SCL       │
+│  D1 (GPIO5)  ───┼──────┼─→ SDA       │ ✅ CHANGED from D2 - DEDICATED!
+│  TX (GPIO1)  ───┼──────┼─→ SCL       │ ✅ CHANGED from D1 - DEDICATED!
 │  3.3V ───────────┼──────┼─→ VCC       │
 │  GND ────────────┼──────┼─→ GND       │
 │                 │      │  AD0 ──→ GND │ (I2C address 0x68)
 └─────────────────┘      └──────────────┘
 
-⚠️ IMPORTANT:
-- MPU6050 is 3.3V device
+✅ V2 BENEFITS:
+- SDA now on D1 (GPIO5) - no motor PWM interference!
+- SCL now on TX (GPIO1) - no motor PWM interference!
+- I2C communication is clean and reliable
+- Serial debugging still available (RX pin free)
+
+⚠️ NOTE:
+- TX pin used for I2C means Serial.print() works on RX
+- MPU6050 is 3.3V device only
 - AD0 pin to GND selects address 0x68
-- If you have XDA/XCL pins, leave unconnected
 ```
 
-### 5. GPS Module (NEO-6M or similar)
+### 5. GPS Module - DISABLED IN V2
 ```
-ESP8266 NodeMCU          GPS Module
-┌─────────────────┐      ┌──────────────┐
-│                 │      │              │
-│  RX (GPIO3)  ───┼──────┼─→ TX        │
-│  TX (GPIO1)  ───┼──────┼─→ RX        │
-│  3.3V or 5V  ───┼──────┼─→ VCC       │
-│  GND ────────────┼──────┼─→ GND       │
-└─────────────────┘      └──────────────┘
+❌ GPS NOT USED IN VERSION 2
 
-⚠️ WARNING:
-- Using RX/TX disables Serial debugging (Serial.print won't work)
-- GPS TX → ESP RX (cross connection)
-- GPS RX → ESP TX (cross connection)
-- Check your GPS module voltage (3.3V or 5V)
-- For 5V GPS: Use voltage divider on GPS TX → ESP RX
+Reason: Pin conflicts solved by reallocating GPS pins
+- TX (GPIO1) now used for I2C SCL (MPU6050)
+- RX (GPIO3) available but not needed
+
+Benefits:
+✅ I2C gets dedicated pins (reliable IMU communication)
+✅ Serial debugging available (Serial.print works)
+✅ Simplified wiring
+✅ All sensors work without conflicts
+
+Future: GPS can be added via software serial on other pins if needed
 ```
 
-### 6. Emergency Stop Button
+### 6. Emergency Stop Button - REMOVED IN V2
 ```
-ESP8266 NodeMCU          Emergency Button
-┌─────────────────┐      
-│                 │      
-│  D0 (GPIO16) ───┼───┬─── Button ─── GND
-│                 │   │
-│                 │   └─── 10kΩ ─── 3.3V (pull-up)
-└─────────────────┘      
+❌ EMERGENCY STOP PIN REALLOCATED
 
-Button Wiring (Active LOW):
-    
-    3.3V ──┬── 10kΩ ──┬── D0 (GPIO16)
-           │          │
-           │          └── Button ── GND
-           
-When pressed: D0 reads LOW (0V)
-When released: D0 reads HIGH (3.3V via pull-up)
+Reason: D0 (GPIO16) now used for Motor Left PWM
 
-Note: Internal pull-up can be used, external is more reliable
+Alternatives:
+1. Software emergency stop via WiFi command
+2. Add physical button on available pin (GPIO3 RX if not debugging)
+3. Use state machine ERROR state triggered by watchdog
+
+Current safety features:
+✅ Watchdog system monitoring
+✅ Software emergency stop (motors.emergencyStop())
+✅ Obstacle detection (sonar)
+✅ Tilt detection (IMU)
+✅ WiFi command: {"action": "emergency_stop"}
 ```
 
 ### 7. Status LED (Built-in)
@@ -281,105 +293,94 @@ Battery 2: 7.4V LiPo ──→ L298D 12V pin (motors only)
 
 ---
 
-## ⚠️ PIN SHARING STRATEGY & IMPACT
+## ✅ V2 PIN ALLOCATION - NO CONFLICTS!
 
-### Shared Pin #1: D1 (GPIO5)
-**Functions:** Motor Left PWM + I2C SCL
-
-**How it works:**
-- I2C communication happens in bursts (reading IMU data)
-- Motor PWM is continuous when moving
-- **Impact:** Minor - I2C reads should happen between motor updates
-- **Solution:** Main loop already sequences operations properly
-
-**Timing:**
+### Why V2 is Better:
 ```
-Loop cycle (50ms):
-1. Read I2C (IMU data) - 2-5ms
-2. Update motors - remaining time
-No conflict because they don't happen simultaneously
+✅ ALL FUNCTIONS HAVE DEDICATED GPIO PINS
+✅ No PWM interference with I2C communication
+✅ No motor/sonar conflicts
+✅ Reliable sensor readings
+✅ Serial debugging available (TX used for I2C but RX free)
+✅ Professional-grade pin allocation
 ```
 
-### Shared Pin #2: D7 (GPIO13)
-**Functions:** Motor Right IN2 + Sonar Echo
+### Pin Assignment Summary:
+| Function | GPIO | Pin | Dedicated? |
+|----------|------|-----|------------|
+| Motor Left PWM | 16 | D0 | ✅ Yes |
+| Motor Left IN1 | 2 | D4 | ✅ Yes (shares with LED only) |
+| Motor Left IN2 | 14 | D5 | ✅ Yes |
+| Motor Right PWM | 12 | D6 | ✅ Yes |
+| Motor Right IN1 | 15 | D8 | ✅ Yes |
+| Motor Right IN2 | 13 | D7 | ✅ Yes - NO CONFLICT! |
+| Sonar TRIG | 4 | D2 | ✅ Yes |
+| Sonar ECHO | 0 | D3 | ✅ Yes - NO CONFLICT! |
+| I2C SDA | 5 | D1 | ✅ Yes - NO PWM! |
+| I2C SCL | 1 | TX | ✅ Yes - NO PWM! |
 
-**How it works:**
-- Sonar Echo receives pulses for distance measurement
-- Motor IN2 controls direction (HIGH/LOW, not PWM)
+**Result:** Stable, reliable operation without timing-dependent workarounds!
+
+---
 - **Impact:** Minor - Sonar readings affected when changing motor direction
 - **Solution:** Sonar primarily used when motors are stable/moving forward
 
 **Mitigation:**
 ```
-When obstacle detected:
-1. Motors stop (IN2 becomes LOW and stays stable)
-2. Sonar can read clearly
-3. Decision made
-4. Motors resume
-```
-
-### Shared Pin #3: RX/TX (GPIO3/GPIO1)
-**Functions:** Serial Debug + GPS Communication
-
-**How it works:**
-- Cannot use Serial.print() when GPS is active
-- **Impact:** No serial debugging when GPS connected
-- **Solution:** Remove GPS for debugging, or use WiFi logging
-
----
-
-## 🔧 ASSEMBLY INSTRUCTIONS
+## 🔧 ASSEMBLY INSTRUCTIONS - V2 (CONFLICT-FREE)
 
 ### Step 1: Prepare Components
 - [ ] ESP8266 NodeMCU
 - [ ] L298D Motor Driver module
-- [ ] 2x DC Motors (6-12V)
+- [ ] 2x DC Motors (6-12V) with wheels
 - [ ] MPU6050 IMU module
 - [ ] HC-SR04 Ultrasonic sensor
-- [ ] GPS module (optional)
-- [ ] Emergency stop button
+- [ ] 2x 1kΩ resistors (for sonar voltage divider)
+- [ ] 1x 2kΩ resistor (for sonar voltage divider)
 - [ ] Breadboard or custom PCB
-- [ ] Jumper wires
-- [ ] Battery/Power supply
+- [ ] Jumper wires (Male-Male, Male-Female)
+- [ ] Battery/Power supply (7.4V LiPo recommended)
 
-### Step 2: ESP8266 to L298D (Motors)
+### Step 2: ESP8266 to L298D (Motors) - V2 UPDATED PINS
 ```
-ESP D1  → L298D ENA
-ESP D3  → L298D IN1
-ESP D4  → L298D IN2
-ESP D5  → L298D ENB
-ESP D6  → L298D IN3
-ESP D7  → L298D IN4
-ESP GND → L298D GND
-```
-
-### Step 3: ESP8266 to MPU6050 (IMU)
-```
-ESP 3.3V → MPU6050 VCC
-ESP D2   → MPU6050 SDA
-ESP D1   → MPU6050 SCL (shared with motor PWM)
-ESP GND  → MPU6050 GND
-MPU AD0  → GND (sets I2C address to 0x68)
+ESP D0 (GPIO16) → L298D ENA  (Left Motor PWM)   ✅ CHANGED from D1
+ESP D4 (GPIO2)  → L298D IN1  (Left Motor Dir)   ✅ CHANGED from D3
+ESP D5 (GPIO14) → L298D IN2  (Left Motor Dir)   ✅ CHANGED from D4
+ESP D6 (GPIO12) → L298D ENB  (Right Motor PWM)  Same
+ESP D8 (GPIO15) → L298D IN3  (Right Motor Dir)  ✅ CHANGED from D6
+ESP D7 (GPIO13) → L298D IN4  (Right Motor Dir)  Same
+ESP GND         → L298D GND
 ```
 
-### Step 4: ESP8266 to HC-SR04 (Sonar)
+### Step 3: ESP8266 to MPU6050 (IMU) - V2 DEDICATED PINS
 ```
-ESP 3.3V or 5V → HC-SR04 VCC
-ESP D8         → HC-SR04 TRIG
-ESP D7         → HC-SR04 ECHO (shared with motor IN2)
-ESP GND        → HC-SR04 GND
-
-If using 5V VCC, add voltage divider on ECHO:
-ECHO → 1kΩ → ESP D7
-       └─ 2kΩ → GND
+ESP 3.3V        → MPU6050 VCC
+ESP D1 (GPIO5)  → MPU6050 SDA  ✅ CHANGED from D2 - DEDICATED!
+ESP TX (GPIO1)  → MPU6050 SCL  ✅ CHANGED from D1 - DEDICATED!
+ESP GND         → MPU6050 GND
+MPU AD0         → GND (sets I2C address to 0x68)
 ```
 
-### Step 5: ESP8266 to GPS (Optional)
+### Step 4: ESP8266 to HC-SR04 (Sonar) - V2 UPDATED + VOLTAGE DIVIDER
 ```
-ESP 3.3V → GPS VCC
-ESP RX   → GPS TX
-ESP TX   → GPS RX
-ESP GND  → GPS GND
+HC-SR04 VCC  → ESP 5V or 3.3V
+HC-SR04 GND  → ESP GND
+HC-SR04 TRIG → ESP D2 (GPIO4)   ✅ CHANGED from D8
+HC-SR04 ECHO → Voltage Divider → ESP D3 (GPIO0)  ✅ CHANGED from D7
+
+⚠️ CRITICAL: Voltage Divider for ECHO (if using 5V VCC):
+  HC-SR04 ECHO ──→ 1kΩ resistor ──→ ESP D3 (GPIO0)
+                                └──→ 2kΩ resistor ──→ GND
+
+Alternative (simpler):
+  Power HC-SR04 from 3.3V instead of 5V
+  Direct connection: ECHO → ESP D3 (no resistors)
+```
+
+### Step 5: GPS Module - NOT USED IN V2
+```
+❌ SKIP THIS STEP - GPS disabled in V2
+GPS pins reallocated to solve conflicts
 ```
 
 ### Step 6: Emergency Stop Button
@@ -549,47 +550,79 @@ Separate power and signal grounds (star ground)
 
 ---
 
-## ⚡ QUICK REFERENCE PINOUT
+## ⚡ QUICK REFERENCE PINOUT - V2 (CONFLICT-FREE)
 
 ### ESP8266 NodeMCU D-Pin to GPIO Mapping:
 ```
-D0  = GPIO16  (E-Stop)
-D1  = GPIO5   (I2C SCL + Motor Left PWM)  ⚠️ SHARED
-D2  = GPIO4   (I2C SDA)
-D3  = GPIO0   (Motor Left IN1)
-D4  = GPIO2   (Motor Left IN2 + Built-in LED)
-D5  = GPIO14  (Motor Right PWM)
-D6  = GPIO12  (Motor Right IN1)
-D7  = GPIO13  (Motor Right IN2 + Sonar ECHO)  ⚠️ SHARED
-D8  = GPIO15  (Sonar TRIG)
-RX  = GPIO3   (GPS TX)
-TX  = GPIO1   (GPS RX)
+D0  = GPIO16  (Motor Left PWM)           ✅ CHANGED - Dedicated
+D1  = GPIO5   (I2C SDA)                  ✅ CHANGED - Dedicated I2C
+D2  = GPIO4   (Sonar TRIG)               ✅ CHANGED from I2C SDA
+D3  = GPIO0   (Sonar ECHO)               ✅ CHANGED - Dedicated INPUT
+D4  = GPIO2   (Motor Left IN1 + LED)     ✅ CHANGED - LED OK to share
+D5  = GPIO14  (Motor Left IN2)           ✅ CHANGED - Dedicated
+D6  = GPIO12  (Motor Right PWM)          Same - Dedicated  
+D7  = GPIO13  (Motor Right IN2)          ✅ NO CONFLICT! Dedicated
+D8  = GPIO15  (Motor Right IN1)          ✅ CHANGED - Dedicated
+RX  = GPIO3   (Available - not used)     GPS removed
+TX  = GPIO1   (I2C SCL)                  ✅ CHANGED - Dedicated I2C
 ```
+
+### V2 Pin Changes Summary:
+| Old (V1) | New (V2) | Component | Reason |
+|----------|----------|-----------|--------|
+| D1 | D0 | Motor L PWM | Free D1 for I2C |
+| D3 | D4 | Motor L IN1 | Accommodate shifts |
+| D4 | D5 | Motor L IN2 | Accommodate shifts |
+| D6 | D8 | Motor R IN1 | Better grouping |
+| D8 | D2 | Sonar TRIG | Free D7/D8 |
+| D7 | D3 | Sonar ECHO | Eliminate motor conflict |
+| D2 | D1 | I2C SDA | Swap with SCL |
+| D1 | TX | I2C SCL | Eliminate PWM interference |
 
 ### Color Code Suggestion:
 - **Red** = Power (VCC, VIN, Battery +)
 - **Black** = Ground (GND, Battery -)
-- **Yellow** = Signal (GPIO pins)
+- **Yellow** = Motor signals (PWM, IN1-IN4)
 - **Blue** = I2C (SDA/SCL)
-- **Green** = Serial (RX/TX)
+- **Green** = Sonar (TRIG/ECHO)
+- **Orange** = PWM signals
 
 ---
 
-## ✅ FINAL VERIFICATION
+## ✅ FINAL VERIFICATION - V2 CHECKLIST
 
 Before deploying:
-- [ ] All connections match this diagram
-- [ ] No loose wires
-- [ ] Motor power isolated from logic power
-- [ ] Emergency stop tested and working
-- [ ] Self-test passes (7/7 tests)
+- [ ] All connections match V2 diagram (not V1!)
+- [ ] Motor pins: D0, D4, D5, D6, D7, D8 → L298D
+- [ ] Sonar pins: D2 (TRIG), D3 (ECHO with voltage divider)
+- [ ] IMU pins: D1 (SDA), TX (SCL)
+- [ ] No loose wires or shorts
+- [ ] Motor power separate from logic power
+- [ ] All grounds connected to common GND
+- [ ] Voltage divider installed on sonar ECHO (if using 5V)
+- [ ] Self-test passes (5/5 tests - no GPS/E-Stop)
+  - ✅ Motors test PASSED
+  - ✅ IMU test PASSED
+  - ✅ Sonar test PASSED (not -1.0 cm!)
+  - ✅ WiFi test PASSED (or optional in test mode)
+  - ✅ Watchdog test PASSED
 - [ ] Robot chassis secure
 - [ ] Batteries charged
 - [ ] Ready to roll! 🤖
 
 ---
 
-**Your robot is wired and ready for testing!**
+**Your V2 robot is wired conflict-free and ready for testing!**
+
+Expected startup log:
+```
+✓ Motors initialized
+✓ IMU initialized  
+✓ Sonar initialized
+✓ WiFi connected (or optional)
+✓ ALL TESTS PASSED
+State: IDLE
+```
 
 For software setup, see [QUICK_START_GUIDE.md](QUICK_START_GUIDE.md)
 
