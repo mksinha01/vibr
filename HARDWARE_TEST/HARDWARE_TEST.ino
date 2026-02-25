@@ -1,6 +1,8 @@
 // V2 HARDWARE TEST - Upload this to diagnose wiring issues
 // This tests each component individually to find wiring problems
 
+#include <Wire.h>
+
 void setup() {
   Serial.begin(115200);
   delay(2000);
@@ -20,8 +22,8 @@ void setup() {
   #define SONAR_TRIGGER_PIN   4    // D2
   #define SONAR_ECHO_PIN      0    // D3
   
-  #define I2C_SDA             5    // D1
-  #define I2C_SCL             1    // TX
+  #define I2C_SDA             3    // RX (GPS disabled, conflict-free)
+  #define I2C_SCL             1    // TX (GPS disabled, conflict-free)
   
   // Initialize motor pins
   pinMode(MOTOR_LEFT_PWM, OUTPUT);
@@ -125,7 +127,7 @@ void setup() {
   Serial.println("\n═══════════════════════════════════════");
   Serial.println("TEST 5: I2C SCANNER (MPU6050 should be 0x68)");
   Serial.println("═══════════════════════════════════════");
-  Serial.println("Pins: D1(SDA), TX(SCL)");
+  Serial.println("Pins: RX(SDA), TX(SCL)");
   
   Wire.begin(I2C_SDA, I2C_SCL);
   Wire.setClock(100000);
@@ -152,7 +154,7 @@ void setup() {
   
   if (count == 0) {
     Serial.println("No I2C devices found ✗");
-    Serial.println("Check: D1→SDA, TX→SCL, 3.3V power, GND");
+    Serial.println("Check: RX→SDA, TX→SCL, 3.3V power, GND");
   }
   
   Serial.println("\n╔════════════════════════════════════════╗");

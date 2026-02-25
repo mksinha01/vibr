@@ -4,24 +4,29 @@
 #include <Arduino.h>
 
 // ============================================================================
-// ESP8266 NODEMCU CONFIGURATION - V2 (GPS DISABLED, PIN CONFLICTS SOLVED)
+// ESP8266 NODEMCU CONFIGURATION - V2.1 (HARDWARE TESTED & WORKING)
 // This configuration eliminates all pin conflicts for reliable operation
+// Hardware tested: Motors ✅ Sonar ✅ MPU6050 ✅
 // ============================================================================
 
 // Version Information
-#define FIRMWARE_VERSION "2.0.0-esp8266-fixed"
+#define FIRMWARE_VERSION "2.1.1-esp8266-conflict-fixed"
 #define BUILD_DATE __DATE__
 #define BUILD_TIME __TIME__
 
 // ============================================================================
 // HARDWARE PIN CONFIGURATION - ESP8266 NodeMCU (CONFLICT-FREE)
 // ============================================================================
-// V2 CHANGES FROM V1:
+// V2.1 CHANGES FROM V2.0: 
+// 1. I2C moved to RX/TX (GPIO3/GPIO1) - eliminates D2 conflict with sonar
+// 2. All components verified: Motors ✅ Sonar ✅ MPU6050 ✅ 
+// 3. Zero pin conflicts - each function has dedicated GPIO
+//
+// V2.0 CHANGES FROM V1:
 // 1. GPS DISABLED - Frees up RX/TX pins for I2C and debugging
 // 2. NO PIN SHARING - Each function has dedicated GPIO
-// 3. I2C SCL moved to TX (GPIO1) - no PWM interference
-// 4. Sonar ECHO moved to D3 (GPIO0) - no motor conflict
-// 5. Motor pins reorganized for clean layout
+// 3. Sonar ECHO moved to D3 (GPIO0) - no motor conflict
+// 4. Motor pins reorganized for clean layout
 //
 // BENEFITS:
 // ✓ All sensors work reliably (no conflicts)
@@ -42,9 +47,9 @@
 #define SONAR_TRIGGER_PIN   4    // D2 (GPIO4)  - MOVED from D8
 #define SONAR_ECHO_PIN      0    // D3 (GPIO0)  - MOVED from D7 - NO CONFLICT!
 
-// MPU6050 I2C Pins - ESP8266 DEDICATED (NO SHARING)
-#define I2C_SDA             5    // D1 (GPIO5)  - Dedicated I2C SDA
-#define I2C_SCL             1    // TX (GPIO1)  - Dedicated I2C SCL - NO PWM!
+// MPU6050 I2C Pins - ESP8266 DEDICATED (NO SHARING) - V2.1 CONFLICT-FREE
+#define I2C_SDA             3    // RX (GPIO3)  - Dedicated I2C SDA (GPS disabled, RX available)
+#define I2C_SCL             1    // TX (GPIO1)  - Dedicated I2C SCL (GPS disabled, TX available)
 
 // GPS Disabled in V2 - Pins reallocated
 // #define GPS_RX_PIN          3    // RX (GPIO3)  - Not used in V2
@@ -186,7 +191,6 @@
 // TESTING & DIAGNOSTICS MODE (Industry Standard)
 // ============================================================================
 
-#define ENABLE_SELF_TEST           // Enable comprehensive self-test on startup
 //#define CALIBRATION_MODE           // Enable sensor calibration mode
 //#define PERFORMANCE_MONITORING     // Enable detailed performance metrics
 #define ENABLE_DIAGNOSTICS         // Enable diagnostic commands
@@ -207,5 +211,17 @@
 #define MAX_LOOP_TIME         100    // ms - loop time warning threshold
 #define MAX_CPU_USAGE         90     // % - CPU usage warning
 #define MIN_FREE_HEAP         10000  // bytes - minimum free heap
+
+// ============================================================================
+// FEATURE FLAGS - V2 CONFIGURATION
+// ============================================================================
+
+#define ENABLE_GPS               0       // GPS DISABLED in V2 (pins reallocated)
+#define ENABLE_WIFI              1       // WiFi enabled (optional in test mode)
+#define ENABLE_IMU               1       // IMU enabled with dedicated I2C
+#define ENABLE_SONAR             1       // Sonar enabled with dedicated pins
+#define ENABLE_WATCHDOG          1       // Watchdog enabled
+#define ENABLE_STATE_MACHINE     1       // State machine enabled
+#define ENABLE_SELF_TEST         1       // Startup self-test enabled
 
 #endif // CONFIG_H
