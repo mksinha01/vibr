@@ -10,7 +10,7 @@
 // ============================================================================
 
 // Version Information
-#define FIRMWARE_VERSION "2.1.1-esp8266-conflict-fixed"
+#define FIRMWARE_VERSION "2.1.1-esp8266-debug-mode"
 #define BUILD_DATE __DATE__
 #define BUILD_TIME __TIME__
 
@@ -218,10 +218,10 @@
 
 #define ENABLE_GPS               0       // GPS DISABLED in V2 (pins reallocated)
 #define ENABLE_WIFI              1       // WiFi enabled (optional in test mode)
-#define ENABLE_IMU               1       // IMU enabled with dedicated I2C
+#define ENABLE_IMU               0       // IMU DISABLED (I2C debug mode - hardware issue)
 #define ENABLE_SONAR             1       // Sonar enabled with dedicated pins
 #define ENABLE_WATCHDOG          1       // Watchdog enabled
 #define ENABLE_STATE_MACHINE     1       // State machine enabled
-#define ENABLE_SELF_TEST         1       // Startup self-test enabled
+#define ENABLE_SELF_TEST         0       // Startup self-test DISABLED (hardware debug mode)
 
 #endif // CONFIG_H

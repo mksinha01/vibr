@@ -63,7 +63,7 @@ void printPerformanceReport();
 
 void setup() {
     // Initialize serial communication
-    Serial.begin(115200);
+    Serial.begin(9600);
     delay(1000);
     
     Serial.println("\n\n");
@@ -217,6 +217,7 @@ bool initializeSystem() {
     }
     
     // Initialize IMU
+    #if ENABLE_IMU == 1
     if (imu.init()) {
         LOGI("IMU initialized");
         watchdog.reportHealthy(IMU);
@@ -224,6 +225,10 @@ bool initializeSystem() {
         LOGW("IMU initialization failed - will continue without it");
         watchdog.reportError(IMU);
     }
+    #else
+    LOGW("IMU disabled in config (hardware debug mode)");
+    watchdog.reportError(IMU);
+    #endif
     
     // GPS skipped in minimal version
     LOGW("GPS disabled in minimal version");
