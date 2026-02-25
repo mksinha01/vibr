@@ -219,7 +219,7 @@
 #define ENABLE_GPS               0       // GPS DISABLED in V2 (pins reallocated)
 #define ENABLE_WIFI              1       // WiFi enabled (optional in test mode)
 #define ENABLE_IMU               0       // IMU DISABLED (I2C debug mode - hardware issue)
-#define ENABLE_SONAR             1       // Sonar enabled with dedicated pins
+#define ENABLE_SONAR            0       // Sonar DISABLED (timeout issues with current hardware)
 #define ENABLE_WATCHDOG          1       // Watchdog enabled
 #define ENABLE_STATE_MACHINE     1       // State machine enabled
 #define ENABLE_SELF_TEST         0       // Startup self-test DISABLED (hardware debug mode)

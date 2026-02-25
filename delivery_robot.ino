@@ -56,6 +56,7 @@ void processEmergencyStop();
 void performSafetyChecks();
 void updatePerformanceMetrics();
 void printPerformanceReport();
+void processSerialCommands();
 
 // ============================================================================
 // ARDUINO SETUP - SYSTEM INITIALIZATION
@@ -158,6 +159,9 @@ void loop() {
     watchdog.feed();
     ESP.wdtFeed();
     
+    // ===== SERIAL COMMAND PROCESSING (Debug Mode) =====
+    processSerialCommands();
+    
     // ===== SENSOR UPDATES (20Hz) =====
     if (millis() - lastSensorUpdate >= 50) {
         updateSensors();
@@ -234,6 +238,7 @@ bool initializeSystem() {
     LOGW("GPS disabled in minimal version");
     
     // Initialize sonar
+    #if ENABLE_SONAR == 1
     if (sonar.init()) {
         LOGI("Sonar initialized");
         watchdog.reportHealthy(SONAR);
@@ -241,6 +246,10 @@ bool initializeSystem() {
         LOGW("Sonar initialization failed - will continue without it");
         watchdog.reportError(SONAR);
     }
+    #else
+    LOGW("Sonar disabled in config (hardware debug mode)");
+    watchdog.reportError(SONAR);
+    #endif
     
     // Initialize WiFi communication
     if (wifiComm.init()) {
@@ -607,4 +616,102 @@ void runComprehensiveSelfTest() {
         LOGE("❌ SOME TESTS FAILED - CHECK HARDWARE");
     }
     LOGI("════════════════════════════════════════════════");
+}
+
+// ============================================================================
+// SERIAL COMMAND PROCESSING - DEBUG MODE
+// ============================================================================
+
+void processSerialCommands() {
+    if (Serial.available() > 0) {
+        String command = Serial.readStringUntil('\n');
+        command.trim();
+        command.toLowerCase();
+        
+        LOGI("Received command: %s", command.c_str());
+        
+        // Basic movement commands for testing
+        if (command.startsWith("forward")) {
+            int duration = command.substring(7).toInt();
+            if (duration == 0) duration = 2;
+            
+            LOGI("Moving forward for %d seconds...", duration);
+            motors.moveForward(200); // Medium speed
+            delay(duration * 1000);
+            motors.stop();
+            LOGI("Forward movement complete");
+            
+        } else if (command.startsWith("backward")) {
+            int duration = command.substring(8).toInt();
+            if (duration == 0) duration = 2;
+            
+            LOGI("Moving backward for %d seconds...", duration);
+            motors.moveBackward(200); // Medium speed
+            delay(duration * 1000);
+            motors.stop();
+            LOGI("Backward movement complete");
+            
+        } else if (command.startsWith("left")) {
+            int duration = command.substring(4).toInt();
+            if (duration == 0) duration = 1;
+            
+            LOGI("Turning left for %d seconds...", duration);
+            motors.turnLeft(150); // Lower speed for turning
+            delay(duration * 1000);
+            motors.stop();
+            LOGI("Left turn complete");
+            
+        } else if (command.startsWith("right")) {
+            int duration = command.substring(5).toInt();
+            if (duration == 0) duration = 1;
+            
+            LOGI("Turning right for %d seconds...", duration);
+            motors.turnRight(150); // Lower speed for turning
+            delay(duration * 1000);
+            motors.stop();
+            LOGI("Right turn complete");
+            
+        } else if (command == "stop") {
+            LOGI("Emergency stop activated");
+            motors.stop();
+            
+        } else if (command == "test") {
+            LOGI("Running motor test sequence...");
+            
+            // Quick test sequence
+            motors.moveForward(150);
+            delay(1000);
+            motors.stop();
+            delay(500);
+            
+            motors.moveBackward(150);
+            delay(1000);
+            motors.stop();
+            delay(500);
+            
+            motors.turnLeft(120);
+            delay(500);
+            motors.stop();
+            delay(500);
+            
+            motors.turnRight(120);
+            delay(500);
+            motors.stop();
+            
+            LOGI("Motor test sequence complete");
+            
+        } else if (command == "help") {
+            LOGI("Available commands:");
+            LOGI("  forward [seconds]  - Move forward (default: 2s)");
+            LOGI("  backward [seconds] - Move backward (default: 2s)");
+            LOGI("  left [seconds]     - Turn left (default: 1s)");
+            LOGI("  right [seconds]    - Turn right (default: 1s)");
+            LOGI("  stop               - Emergency stop");
+            LOGI("  test               - Run full movement test");
+            LOGI("  help               - Show this help");
+            
+        } else if (command.length() > 0) {
+            LOGW("Unknown command: %s (type 'help' for commands)", command.c_str());
+        }
+    }
 }
