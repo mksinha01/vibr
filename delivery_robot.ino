@@ -84,10 +84,15 @@ void setup() {
     LOGI("Watchdog initialized (timeout: %d ms)", WATCHDOG_TIMEOUT);
     
     // Configure emergency stop button
+    #if ENABLE_GPS == 0
+    // Emergency stop disabled in V2 (pin reallocated to motor PWM)
+    LOGI("Emergency stop disabled in V2 - use software emergency stop");
+    #else
     pinMode(EMERGENCY_STOP_PIN, INPUT);
     attachInterrupt(digitalPinToInterrupt(EMERGENCY_STOP_PIN), 
                    emergencyStopISR, FALLING);
     LOGI("Emergency stop configured on pin %d", EMERGENCY_STOP_PIN);
+    #endif
     
     // Initialize state machine
     stateMachine.init();
@@ -355,6 +360,10 @@ void processEmergencyStop() {
         stopHandled = true;
     }
     
+    #if ENABLE_GPS == 0
+    // Emergency stop pin disabled in V2 - software-only emergency stop
+    // Release via WiFi command or reset
+    #else
     if (digitalRead(EMERGENCY_STOP_PIN) == HIGH) {
         delay(50);
         if (digitalRead(EMERGENCY_STOP_PIN) == HIGH) {
@@ -365,6 +374,7 @@ void processEmergencyStop() {
             perfMetrics.errorRecoveries++;
         }
     }
+    #endif
     
     delay(100);
 }

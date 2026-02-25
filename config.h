@@ -50,6 +50,9 @@
 // #define GPS_RX_PIN          3    // RX (GPIO3)  - Not used in V2
 // #define GPS_TX_PIN          1    // TX (GPIO1)  - Now used for I2C SCL
 
+// Emergency Stop - DISABLED IN V2 (pin reallocated to Motor PWM)
+#define EMERGENCY_STOP_PIN  -1   // Not used in V2 - dummy define for compilation
+
 // Status LED (Emergency stop pin reallocated to Motor PWM)
 #define STATUS_LED_PIN      2    // D4 (GPIO2) - Built-in LED (shares with Motor IN1)
 
@@ -63,11 +66,13 @@
 #define MPU6050_ACCEL_RANGE       2      // g
 #define MPU6050_I2C_ADDRESS       0x68   // Default address
 
-// GPS Settings - DISABLED IN V2
-// #define GPS_BAUD_RATE             9600
-// #define GPS_UPDATE_RATE           1      // Hz
-// #define GPS_MIN_SATELLITES        4
-// #define GPS_ACCURACY_THRESHOLD    5.0    // meters
+// GPS Settings - DISABLED IN V2 (dummy defines for compilation)
+#define GPS_BAUD_RATE             9600
+#define GPS_UPDATE_RATE           1      // Hz
+#define GPS_MIN_SATELLITES        4
+#define GPS_ACCURACY_THRESHOLD    5.0    // meters
+#define GPS_RX_PIN                3      // Not used in V2
+#define GPS_TX_PIN                1      // Not used in V2
 
 // Sonar Settings
 #define SONAR_MAX_DISTANCE        400    // cm
