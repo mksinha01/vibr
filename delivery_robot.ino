@@ -102,7 +102,7 @@ void setup() {
     if (initializeSystem()) {
         systemInitialized = true;
         
-#ifdef ENABLE_SELF_TEST
+#if ENABLE_SELF_TEST == 1
         LOGI("\n");
         LOGI("╔══════════════════════════════════════════════╗");
         LOGI("║    RUNNING COMPREHENSIVE SELF-TEST         ║");
@@ -111,6 +111,8 @@ void setup() {
         LOGI("╔══════════════════════════════════════════════╗");
         LOGI("║    SELF-TEST COMPLETE                       ║");
         LOGI("╚══════════════════════════════════════════════╝\n");
+#else
+        LOGI("Self-test disabled - ready for motor testing");
 #endif
         
         stateMachine.forceState(STATE_IDLE);
@@ -156,7 +158,9 @@ void loop() {
     stateMachine.update();
     
     // ===== WATCHDOG FEEDING =====
+    #if ENABLE_WATCHDOG == 1
     watchdog.feed();
+    #endif
     ESP.wdtFeed();
     
     // ===== SERIAL COMMAND PROCESSING (Debug Mode) =====
@@ -181,10 +185,12 @@ void loop() {
     }
     
     // ===== HEALTH MONITORING (1Hz) =====
+    #if ENABLE_WATCHDOG == 1
     if (millis() - lastHealthCheck >= 1000) {
         watchdog.update();
         lastHealthCheck = millis();
     }
+    #endif
     
     // ===== COMMUNICATION =====
     wifiComm.update();
@@ -213,10 +219,14 @@ bool initializeSystem() {
     // Initialize motors
     if (motors.init()) {
         LOGI("Motors initialized");
+        #if ENABLE_WATCHDOG == 1
         watchdog.reportHealthy(MOTOR);
+        #endif
     } else {
         LOGE("Motor initialization failed!");
+        #if ENABLE_WATCHDOG == 1
         watchdog.reportError(MOTOR);
+        #endif
         allOk = false;
     }
     
@@ -224,14 +234,20 @@ bool initializeSystem() {
     #if ENABLE_IMU == 1
     if (imu.init()) {
         LOGI("IMU initialized");
+        #if ENABLE_WATCHDOG == 1
         watchdog.reportHealthy(IMU);
+        #endif
     } else {
         LOGW("IMU initialization failed - will continue without it");
+        #if ENABLE_WATCHDOG == 1
         watchdog.reportError(IMU);
+        #endif
     }
     #else
     LOGW("IMU disabled in config (hardware debug mode)");
+    #if ENABLE_WATCHDOG == 1
     watchdog.reportError(IMU);
+    #endif
     #endif
     
     // GPS skipped in minimal version
@@ -248,20 +264,30 @@ bool initializeSystem() {
     }
     #else
     LOGW("Sonar disabled in config (hardware debug mode)");
+    #if ENABLE_WATCHDOG == 1
     watchdog.reportError(SONAR);
+    #endif
     #endif
     
     // Initialize WiFi communication
     if (wifiComm.init()) {
         LOGI("WiFi communication initialized");
+        #if ENABLE_WATCHDOG == 1
         watchdog.reportHealthy(WIFI);
+        #endif
     } else {
         LOGW("WiFi initialization failed - will continue without it");
+        #if ENABLE_WATCHDOG == 1
         watchdog.reportError(WIFI);
+        #endif
     }
     
     // Initialize watchdog monitoring
+    #if ENABLE_WATCHDOG == 1
     watchdog.init();
+    #else
+    LOGI("Watchdog disabled - motor testing mode");
+    #endif
     
     return allOk;
 }
@@ -636,7 +662,7 @@ void processSerialCommands() {
             if (duration == 0) duration = 2;
             
             LOGI("Moving forward for %d seconds...", duration);
-            motors.moveForward(200); // Medium speed
+            motors.forward(200); // Medium speed
             delay(duration * 1000);
             motors.stop();
             LOGI("Forward movement complete");
@@ -646,7 +672,7 @@ void processSerialCommands() {
             if (duration == 0) duration = 2;
             
             LOGI("Moving backward for %d seconds...", duration);
-            motors.moveBackward(200); // Medium speed
+            motors.backward(200); // Medium speed
             delay(duration * 1000);
             motors.stop();
             LOGI("Backward movement complete");
@@ -679,12 +705,12 @@ void processSerialCommands() {
             LOGI("Running motor test sequence...");
             
             // Quick test sequence
-            motors.moveForward(150);
+            motors.forward(150);
             delay(1000);
             motors.stop();
             delay(500);
             
-            motors.moveBackward(150);
+            motors.backward(150);
             delay(1000);
             motors.stop();
             delay(500);
